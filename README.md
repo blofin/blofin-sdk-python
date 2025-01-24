@@ -1,6 +1,6 @@
-# Blofin SDK Package
+# BloFin SDK Package
 
-Python SDK for interacting with the Blofin cryptocurrency exchange API.
+Python SDK for interacting with the BloFin API.
 
 ## Installation
 
@@ -60,7 +60,7 @@ For detailed usage examples, please refer to the [examples](examples/) directory
 
 ## Documentation
 
-For detailed API documentation, please refer to the [Blofin API Documentation](https://blofin.com/docs).
+For detailed API documentation, please refer to the [BloFin API Documentation](https://blofin.com/docs).
 
 ## Features
 
@@ -91,7 +91,7 @@ python -m pytest
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache License 
 
 ## Security
 
