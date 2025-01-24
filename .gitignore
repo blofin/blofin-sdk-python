@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+.python-version
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.project
+.pydevproject
+.settings/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# Distribution
+*.tar.gz
+*.whl
+
+# Logs
+*.log
+logs/
+log/
+
+# Local development settings
+local_settings.py
+settings_local.py
+config_local.py
+
+# API Keys and Secrets
+*_key
+*_secret
+*.pem
+credentials.json
+secrets.yaml
+.env*
+.coverage
