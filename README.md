@@ -13,24 +13,31 @@ pip install -e .
 ### REST API
 
 ```python
-from blofin.client import Client
+from blofin.client import Client, DemoClient
 from blofin.rest_trading import TradingAPI
 from blofin.rest_market import MarketAPI
 from blofin.rest_affiliate import AffiliateAPI
 from blofin.rest_copytrading import CopyTradingAPI
 
-# Initialize client
+# Initialize production client
 client = Client(
-    api_key="your-api-key",
-    api_secret="your-api-secret",
+    apiKey="your-api-key",
+    apiSecret="your-api-secret",
     passphrase="your-passphrase"
 )
 
-# Initialize APIs
-trading = TradingAPI(client)
-market = MarketAPI(client)
-affiliate = AffiliateAPI(client)
-copytrading = CopyTradingAPI(client)
+# Or initialize demo trading client
+demo_client = DemoClient(
+    apiKey="your-api-key",
+    apiSecret="your-api-secret",
+    passphrase="your-passphrase"
+)
+
+# Initialize APIs (works with both production and demo clients)
+trading = TradingAPI(client)  # or TradingAPI(demo_client)
+market = MarketAPI(client)    # or MarketAPI(demo_client)
+affiliate = AffiliateAPI(client)  # or AffiliateAPI(demo_client)
+copytrading = CopyTradingAPI(client)  # or CopyTradingAPI(demo_client)
 ```
 
 ### WebSocket API
@@ -39,24 +46,54 @@ copytrading = CopyTradingAPI(client)
 from blofin.websocket_client import BlofinWsClient, BlofinWsPublicClient, BlofinWsPrivateClient, BlofinWsCopytradingClient
 
 # Public WebSocket (no authentication required)
-public_client = BlofinWsPublicClient()
+public_client = BlofinWsPublicClient()  # For production
+demo_public_client = BlofinWsPublicClient(isDemo=True)  # For demo trading
 
 # Private WebSocket (authentication required)
 private_client = BlofinWsPrivateClient(
     apiKey="your-api-key",
     secret="your-api-secret",
     passphrase="your-passphrase"
-)
+)  # For production
+
+demo_private_client = BlofinWsPrivateClient(
+    apiKey="your-api-key",
+    secret="your-api-secret",
+    passphrase="your-passphrase",
+    isDemo=True
+)  # For demo trading
 
 # Copytrading WebSocket
 copytrading_client = BlofinWsCopytradingClient(
     apiKey="your-api-key",
     secret="your-api-secret",
     passphrase="your-passphrase"
-)
+)  # For production
+
 ```
 
 For detailed usage examples, please refer to the [examples](examples/) directory.
+
+## Demo Trading Environment
+
+BloFin provides a demo trading environment for testing and development. To use the demo environment:
+
+1. **REST API**:
+   - Use the `DemoClient` class instead of `Client`
+   - Or set `isDemo=True` when initializing a regular `Client`
+   - Demo trading base URL: `https://demo-trading-openapi.blofin.com`
+
+2. **WebSocket API**:
+   - Set `isDemo=True` when initializing WebSocket clients
+   - Demo WebSocket URLs:
+     - Public: `wss://demo-trading-openapi.blofin.com/ws/public`
+     - Private: `wss://demo-trading-openapi.blofin.com/ws/private`
+
+3. **Features**:
+   - Test trading strategies without real funds
+   - Same API interface as production
+   - Simulated market conditions
+   - Practice risk management
 
 ## Documentation
 
@@ -91,7 +128,7 @@ python -m pytest
 
 ## License
 
-This project is licensed under the Apache License 
+This project is licensed under the Apache License.
 
 ## Security
 

@@ -7,14 +7,14 @@ from typing import Dict
 class TestRestAffiliateAPI(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
-        self.client = Client("test_api_key", "test_api_secret", "test_passphrase")
+        self.client = Client(apiKey="test_api_key", apiSecret="test_api_secret", passphrase="test_passphrase")
         self.affiliate_api = AffiliateAPI(self.client)
 
     def test_init(self):
         """Test AffiliateAPI initialization"""
         self.assertIsInstance(self.affiliate_api._client, Client)
 
-    def test_get_basic_info(self):
+    def test_getBasicInfo(self):
         """Test getBasicInfo method"""
         mock_response = {
             "code": "0",
@@ -36,7 +36,7 @@ class TestRestAffiliateAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/affiliate/basic')
             self.assertEqual(response, mock_response)
 
-    def test_get_invitees(self):
+    def test_getInvitees(self):
         """Test getInvitees method"""
         mock_response = {
             "code": "0",
@@ -65,7 +65,7 @@ class TestRestAffiliateAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/affiliate/invitees', params)
             self.assertEqual(response, mock_response)
 
-    def test_get_sub_invitees(self):
+    def test_getSubInvitees(self):
         """Test getSubInvitees method"""
         mock_response = {
             "code": "0",
@@ -83,7 +83,7 @@ class TestRestAffiliateAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/affiliate/sub-invitees', params={'subAffiliateUid': '30285102093', 'subAffiliateLevel': '2', 'begin': '1737547079902', 'limit': '10'})
             self.assertEqual(response, mock_response)
 
-    def test_get_sub_affiliates(self):
+    def test_getSubAffiliates(self):
         """Test getSubAffiliates method"""
         mock_response = {
             "code": "0",
@@ -100,7 +100,7 @@ class TestRestAffiliateAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/affiliate/sub-affiliates', params)
             self.assertEqual(response, mock_response)
 
-    def test_get_invitees_daily_commission(self):
+    def test_getInviteesDailyCommission(self):
         """Test getInviteesDailyCommission method"""
         mock_response = {
             "code": "0",

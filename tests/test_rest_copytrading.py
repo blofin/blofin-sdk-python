@@ -3,16 +3,16 @@ from unittest.mock import patch, MagicMock
 from blofin.rest_copytrading import CopyTradingAPI
 from blofin.client import Client
 
-class TestRestCopyTradingAPI(unittest.TestCase):
+class TestRestCopytradingAPI(unittest.TestCase):
     def setUp(self):
-        self.client = Client("test_api_key", "test_api_secret")
+        self.client = Client(apiKey="test_api_key", apiSecret="test_api_secret")
         self.copytrading_api = CopyTradingAPI(self.client)
 
     def test_init(self):
-        """Test RestCopyTradingAPI initialization"""
+        """Test RestCopytradingAPI initialization"""
         self.assertIsInstance(self.copytrading_api._client, Client)
 
-    def test_get_instruments(self):
+    def test_getInstruments(self):
         """Test getInstruments method"""
         mock_response = {
             "code": "0",
@@ -24,7 +24,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/copytrading/instruments')
             self.assertEqual(response, mock_response)
 
-    def test_get_config(self):
+    def test_getConfig(self):
         """Test getConfig method"""
         mock_response = {
             "code": "0",
@@ -36,7 +36,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/copytrading/config')
             self.assertEqual(response, mock_response)
 
-    def test_get_account_balance(self):
+    def test_getAccountBalance(self):
         """Test getAccountBalance method"""
         mock_response = {
             "code": "0",
@@ -51,7 +51,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             mock_get.assert_called_with('/api/v1/copytrading/account/balance')
             self.assertEqual(response, mock_response)
 
-    def test_place_order(self):
+    def test_placeOrder(self):
         """Test placeOrder method"""
         mock_response = {
             "code": "0",
@@ -84,7 +84,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_cancel_order(self):
+    def test_cancelOrder(self):
         """Test cancelOrder method"""
         mock_response = {
             "code": "0",
@@ -101,7 +101,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_close_position_by_contract(self):
+    def test_closePositionByContract(self):
         """Test closePositionByContract method"""
         mock_response = {
             "code": "0",
@@ -127,7 +127,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_close_position_by_order(self):
+    def test_closePositionByOrder(self):
         """Test closePositionByOrder method"""
         mock_response = {
             "code": "0",
@@ -146,7 +146,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_place_tpsl_by_contract(self):
+    def test_placeTpslByContract(self):
         """Test placeTpslByContract method"""
         mock_response = {
             "code": "0",
@@ -174,7 +174,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_place_tpsl_by_order(self):
+    def test_placeTpslByOrder(self):
         """Test placeTpslByOrder method"""
         mock_response = {
             "code": "0",
@@ -195,7 +195,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_cancel_tpsl_by_contract(self):
+    def test_cancelTpslByContract(self):
         """Test cancelTpslByContract method"""
         mock_response = {
             "code": "0",
@@ -208,7 +208,7 @@ class TestRestCopyTradingAPI(unittest.TestCase):
             })
             self.assertEqual(response, mock_response)
 
-    def test_cancel_tpsl_by_order(self):
+    def test_cancelTpslByOrder(self):
         """Test cancelTpslByOrder method"""
         mock_response = {
             "code": "0",

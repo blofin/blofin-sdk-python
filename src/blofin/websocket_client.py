@@ -32,10 +32,19 @@ class BlofinWsClient:
     
     # WebSocket endpoints
     PUBLIC_WS_URL = "wss://openapi.blofin.com/ws/public"
-    PRIVATE_WS_URL = "wss://openapi.blofin.com/ws/private" 
+    PRIVATE_WS_URL = "wss://openapi.blofin.com/ws/private"
+    DEMO_PUBLIC_WS_URL = "wss://demo-trading-openapi.blofin.com/ws/public"
+    DEMO_PRIVATE_WS_URL = "wss://demo-trading-openapi.blofin.com/ws/private"
     
-    def __init__(self, apiKey: str = "", secret: str = "", passphrase: str = "",
-                 isPublic: bool = False, isCopytrading: bool = False):
+    def __init__(
+        self, 
+        apiKey: str = "", 
+        secret: str = "", 
+        passphrase: str = "",
+        isPublic: bool = False, 
+        isCopytrading: bool = False,
+        isDemo: bool = False
+    ):
         """Initialize WebSocket client.
         
         Args:
@@ -44,6 +53,7 @@ class BlofinWsClient:
             passphrase: API passphrase for private endpoints
             isPublic: If True, use public endpoint without authentication
             isCopytrading: If True, use copytrading endpoint
+            isDemo: If True, use demo trading endpoints
         """
         # Auth credentials
         self.apiKey = apiKey
@@ -51,12 +61,19 @@ class BlofinWsClient:
         self.passphrase = passphrase
         self.isPublic = isPublic
         self.isCopytrading = isCopytrading
+        self.isDemo = isDemo
         
+        # Determine WebSocket URL based on mode
+        if isPublic:
+            self.ws_url = self.DEMO_PUBLIC_WS_URL if isDemo else self.PUBLIC_WS_URL
+        else:
+            self.ws_url = self.DEMO_PRIVATE_WS_URL if isDemo else self.PRIVATE_WS_URL
+
         # Connection config
         if isCopytrading:
             self.url = "wss://openapi.blofin.com/ws/copytrading/private"
         else:
-            self.url = self.PUBLIC_WS_URL if isPublic else self.PRIVATE_WS_URL
+            self.url = self.ws_url
         
         # Connection state
         self._ws = None
@@ -538,9 +555,13 @@ class BlofinWsPublicClient(BlofinWsClient):
         ``` 
     """
 
-    def __init__(self):
-        """Initialize public WebSocket client."""
-        super().__init__(isPublic=True)
+    def __init__(self, isDemo: bool = False):
+        """Initialize public WebSocket client.
+        
+        Args:
+            isDemo: If True, use demo trading endpoints
+        """
+        super().__init__(isPublic=True, isDemo=isDemo)
 
     async def subscribeTrades(self, instId: str) -> bool:
         """Subscribe to trades channel. Data will be pushed whenever there is a trade.
@@ -769,15 +790,16 @@ class BlofinWsPrivateClient(BlofinWsClient):
     - Algo orders
     """
     
-    def __init__(self, apiKey: str, secret: str, passphrase: str):
+    def __init__(self, apiKey: str, secret: str, passphrase: str, isDemo: bool = False):
         """Initialize private WebSocket client.
         
         Args:
             apiKey: API access key
             secret: API secret key
             passphrase: API passphrase
+            isDemo: If True, use demo trading endpoints
         """
-        super().__init__(apiKey=apiKey, secret=secret, passphrase=passphrase)
+        super().__init__(apiKey=apiKey, secret=secret, passphrase=passphrase, isDemo=isDemo)
         
     async def subscribeOrders(self, instId: Optional[str] = None) -> bool:
         """Subscribe to orders channel. Data will only be pushed when there are order updates.
@@ -843,15 +865,12 @@ class BlofinWsPrivateClient(BlofinWsClient):
                     "leverage": "2",
                     "tpTriggerPrice": "27000.000000000000000000",
                     "tpOrderPrice": "-1",
-                    "slTriggerPrice": null,
-                    "slOrderPrice": null,
-                    "fee": "0.000000000000000000",
-                    "pnl": "0.000000000000000000",
-                    "cancelSource": "",
+                    "triggerPriceType": "last",
+                    "reduceOnly": "false",
+                    "cancelType": "",
                     "orderCategory": "pre_tp_sl",
                     "createTime": "1696760245931",
                     "updateTime": "1696760245973",
-                    "reduceOnly": "false",
                     "brokerId": ""
                 }]
             }
@@ -1122,15 +1141,16 @@ class BlofinWsCopytradingClient(BlofinWsClient):
         ```  
     """
     
-    def __init__(self, apiKey: str, secret: str, passphrase: str):
+    def __init__(self, apiKey: str, secret: str, passphrase: str, isDemo: bool = False):
         """Initialize copytrading WebSocket client.
         
         Args:
             apiKey: API access key
             secret: API secret key
             passphrase: API passphrase
+            isDemo: If True, use demo trading endpoints
         """
-        super().__init__(apiKey=apiKey, secret=secret, passphrase=passphrase, isCopytrading=True)
+        super().__init__(apiKey=apiKey, secret=secret, passphrase=passphrase, isCopytrading=True, isDemo=isDemo)
         
     async def subscribeCopytradingPositions(self) -> bool:
         """Subscribe to copytrading positions channel. Initial snapshot will be pushed on subscription.

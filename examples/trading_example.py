@@ -9,12 +9,12 @@ from blofin.rest_trading import TradingAPI
 def tradingExample():
 
     # Replace these with your API credentials 
-    api_key = "...."
-    secret_key = "...."
+    apiKey = "...."
+    secretKey = "...."
     passphrase = "...."
     brokerId = "...."  # Your broker ID
     
-    client = Client(api_key, secret_key, passphrase)
+    client = Client(apiKey=apiKey, apiSecret=secretKey, passphrase=passphrase)
     trading_api = TradingAPI(client)
     
     print("\n=== Account Information ===")

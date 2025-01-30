@@ -5,7 +5,7 @@ from blofin.client import Client
 
 class TestRestTradingAPI(unittest.TestCase):
     def setUp(self):
-        self.client = Client("test_api_key", "test_api_secret")
+        self.client = Client(apiKey="test_api_key", apiSecret="test_api_secret")
         self.trading_api = TradingAPI(self.client)
 
     def test_init(self):
@@ -40,7 +40,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }]
         }
         with patch.object(self.client, 'get', return_value=mock_response) as mock_get:
-            response = self.trading_api.getBalances("futures", "USDT")
+            response = self.trading_api.getBalances(accountType="futures", currency="USDT")
             mock_get.assert_called_with('/api/v1/asset/balances', params={"accountType": "futures", "currency": "USDT"})
             self.assertEqual(response, mock_response)
 
@@ -105,7 +105,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }
         }
         with patch.object(self.client, 'post', return_value=mock_response) as mock_post:
-            response = self.trading_api.transfer("USDT", "10.00", "funding", "futures")
+            response = self.trading_api.transfer(currency="USDT", amount="10.00", fromAccount="funding", toAccount="futures")
             mock_post.assert_called_with('/api/v1/asset/transfer', {
                 "currency": "USDT",
                 "amount": "10.00",
@@ -127,7 +127,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }]
         }
         with patch.object(self.client, 'get', return_value=mock_response) as mock_get:
-            response = self.trading_api.getPositions("BTC-USDT")
+            response = self.trading_api.getPositions(instId="BTC-USDT")
             mock_get.assert_called_with('/api/v1/account/positions', params={"instId": "BTC-USDT"})
             self.assertEqual(response, mock_response)
 
@@ -170,7 +170,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }
         }
         with patch.object(self.client, 'get', return_value=mock_response) as mock_get:
-            response = self.trading_api.getLeverageInfo("BTC-USDT", "cross")
+            response = self.trading_api.getLeverageInfo(instId="BTC-USDT", marginMode="cross")
             mock_get.assert_called_with('/api/v1/account/leverage-info', params={"instId": "BTC-USDT", "marginMode": "cross"})
             self.assertEqual(response, mock_response)
 
@@ -186,7 +186,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }]
         }
         with patch.object(self.client, 'get', return_value=mock_response) as mock_get:
-            response = self.trading_api.getBatchLeverageInfo(["BTC-USDT", "ETH-USDT"], "cross")
+            response = self.trading_api.getBatchLeverageInfo(instIds=["BTC-USDT", "ETH-USDT"], marginMode="cross")
             mock_get.assert_called_with('/api/v1/account/batch-leverage-info', params={"instId": "BTC-USDT,ETH-USDT", "marginMode": "cross"})
             self.assertEqual(response, mock_response)
 
@@ -345,7 +345,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }
         }
         with patch.object(self.client, 'post', return_value=mock_response) as mock_post:
-            response = self.trading_api.cancelOrder("12345")
+            response = self.trading_api.cancelOrder(orderId="12345")
             mock_post.assert_called_with('/api/v1/trade/cancel-order', {
                 "orderId": "12345"
             })
@@ -379,7 +379,7 @@ class TestRestTradingAPI(unittest.TestCase):
             }
         }
         with patch.object(self.client, 'post', return_value=mock_response) as mock_post:
-            response = self.trading_api.closePosition("BTC-USDT", "cross", "long")
+            response = self.trading_api.closePosition(instId="BTC-USDT", marginMode="cross", positionSide="long")
             mock_post.assert_called_with('/api/v1/trade/close-position', {
                 "instId": "BTC-USDT",
                 "marginMode": "cross",

@@ -5,14 +5,14 @@ from blofin.exceptions import BlofinAPIException
 
 class TestClient(unittest.TestCase):
     def setUp(self):
-        self.api_key = "test_api_key"
-        self.api_secret = "test_api_secret"
-        self.client = Client(self.api_key, self.api_secret)
+        self.apiKey = "test_api_key"
+        self.apiSecret = "test_api_secret"
+        self.client = Client(apiKey=self.apiKey, apiSecret=self.apiSecret)
 
     def test_init(self):
         """Test client initialization"""
-        self.assertEqual(self.client.API_KEY, self.api_key)
-        self.assertEqual(self.client.API_SECRET.decode('utf-8'), self.api_secret)
+        self.assertEqual(self.client.API_KEY, self.apiKey)
+        self.assertEqual(self.client.API_SECRET.decode('utf-8'), self.apiSecret)
 
 if __name__ == '__main__':
     unittest.main()

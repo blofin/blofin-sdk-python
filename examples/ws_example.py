@@ -2,7 +2,6 @@ import asyncio
 import logging
 import sys
 import json
-sys.path.append("./src")
 
 from blofin.websocket_client import BlofinWsPrivateClient, BlofinWsPublicClient
 

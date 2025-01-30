@@ -1,59 +1,58 @@
 from blofin.client import Client
 from blofin.rest_copytrading import CopyTradingAPI
 from blofin.rest_market import MarketAPI
-import time
 
-def copytrading_example():
+def copyTradingExample():
     """Example of using RestCopyTradingAPI for copy trading operations."""
     
     # Replace these with your API credentials
-    api_key = "...."
-    secret_key = "...."
+    apiKey = "...."
+    secretKey = "...."
     passphrase = "...."
     brokerId = "...."  # Your broker ID
     
-    client = Client(api_key=api_key, api_secret=secret_key, passphrase=passphrase)
-    copytrading_api = CopyTradingAPI(client)
-    market_api = MarketAPI(client)
+    client = Client(apiKey=apiKey, apiSecret=secretKey, passphrase=passphrase)
+    copyTradingApi = CopyTradingAPI(client)
+    marketApi = MarketAPI(client)
     
     try:
         # 1. Get available instruments
-        instruments = copytrading_api.getInstruments()
+        instruments = copyTradingApi.getInstruments()
         print("\n=== Available Instruments ===")
         print(instruments)
         
         # 2. Get copy trading configuration
-        config = copytrading_api.getConfig()
+        config = copyTradingApi.getConfig()
         print("\n=== Copy Trading Configuration ===")
         print(config)
         
         # 3. Get account balance
-        balance = copytrading_api.getAccountBalance()
+        balance = copyTradingApi.getAccountBalance()
         print("\n=== Account Balance ===")
         print(balance)
         
         # Get pending orders first
-        pending_orders = copytrading_api.getOrdersPending()
+        pendingOrders = copyTradingApi.getOrdersPending()
         print("\n=== Current Pending Orders ===")
-        print(pending_orders)
+        print(pendingOrders)
 
         # Cancel all pending orders if any exist
-        if pending_orders['data']:
-            for order in pending_orders['data']:
-                cancel_result = copytrading_api.cancelOrder(
+        if pendingOrders['data']:
+            for order in pendingOrders['data']:
+                cancelResult = copyTradingApi.cancelOrder(
                     orderId=str(order['orderId'])  # Convert to string
                 )
                 print(f"\n=== Cancel Order Result for {order['orderId']} ===")
-                print(cancel_result)
+                print(cancelResult)
 
         # Now set position mode and leverage
-        position_mode = copytrading_api.setPositionMode(
+        positionMode = copyTradingApi.setPositionMode(
             positionMode="net_mode"
         )
         print("\n=== Set Position Mode Result ===")
-        print(position_mode)
+        print(positionMode)
 
-        leverage = copytrading_api.setLeverage(
+        leverage = copyTradingApi.setLeverage(
             instId="BTC-USDT",
             leverage="10",
             marginMode="cross",
@@ -63,20 +62,20 @@ def copytrading_example():
         print(leverage)
 
         # Get current price for reference
-        current_price = market_api.getTickers(instId="BTC-USDT")
+        currentPrice = marketApi.getTickers(instId="BTC-USDT")
         print("\n=== Current Price ===")
-        print(current_price)
+        print(currentPrice)
 
         # Place a new order slightly below market price
-        last_price = float(current_price['data'][0]['last'])
-        order_price = str(round(last_price * 1.002, 1))  # 1% below market price
+        lastPrice = float(currentPrice['data'][0]['last'])
+        orderPrice = str(round(lastPrice * 1.002, 1))  # 1% below market price
 
-        order = copytrading_api.placeOrder(
+        order = copyTradingApi.placeOrder(
             instId="BTC-USDT",
             marginMode="cross",
             side="buy",
             orderType="limit",
-            price=order_price,
+            price=orderPrice,
             size="0.2",
             positionSide="net",
             brokerId=brokerId
@@ -85,29 +84,29 @@ def copytrading_example():
         print(order)
 
         # Store orderId for later use
-        order_id = order['orderId']
+        orderId = order['orderId']
         
         # Check if order is filled
-        active_orders = copytrading_api.getOrdersPending()
+        activeOrders = copyTradingApi.getOrdersPending()
         print("\n=== Order Status ===")
-        print(active_orders)
+        print(activeOrders)
         
         # Only set TP/SL if order is filled
-        is_order_active = False
-        for active_order in active_orders.get('data', []):
-            if active_order['orderId'] == order_id:
-                is_order_active = True
+        isOrderActive = False
+        for activeOrder in activeOrders.get('data', []):
+            if activeOrder['orderId'] == orderId:
+                isOrderActive = True
                 break
 
-        if not is_order_active:  # Order not in active orders means it's filled
+        if not isOrderActive:  # Order not in active orders means it's filled
             # Place TP/SL orders
-            tp_price = str(round(last_price * 1.02, 1))  # 2% profit
-            sl_price = str(round(last_price * 0.98, 1))  # 2% loss
+            tpPrice = str(round(lastPrice * 1.02, 1))  # 2% profit
+            slPrice = str(round(lastPrice * 0.98, 1))  # 2% loss
             
-            tpsl = copytrading_api.placeTpslByOrder(
-                orderId=order_id,
-                tpTriggerPrice=tp_price,
-                slTriggerPrice=sl_price,
+            tpsl = copyTradingApi.placeTpslByOrder(
+                orderId=orderId,
+                tpTriggerPrice=tpPrice,
+                slTriggerPrice=slPrice,
                 size="0.1",
                 brokerId=brokerId
             )
@@ -117,36 +116,36 @@ def copytrading_example():
             print("\n=== Order not filled yet, skipping TP/SL ===")
         
         # 8. Get positions by contract
-        positions = copytrading_api.getPositionsByContract(instId="BTC-USDT")
+        positions = copyTradingApi.getPositionsByContract(instId="BTC-USDT")
         print("\n=== Current Positions ===")
         print(positions)
         
         # 9. Get pending orders
-        pending_orders = copytrading_api.getOrdersPending(instId="BTC-USDT")
+        pendingOrders = copyTradingApi.getOrdersPending(instId="BTC-USDT")
         print("\n=== Pending Orders ===")
-        print(pending_orders)
+        print(pendingOrders)
         
         # 10. Get pending TP/SL orders by order
-        pending_tpsl = copytrading_api.getPendingTpslByOrder(orderId=order_id)
+        pendingTpsl = copyTradingApi.getPendingTpslByOrder(orderId=orderId)
         print("\n=== Pending TP/SL Orders ===")
-        print(pending_tpsl)
+        print(pendingTpsl)
         
         # 11. Cancel the order
-        cancel_result = copytrading_api.cancelOrder(
-            orderId=order_id
+        cancelResult = copyTradingApi.cancelOrder(
+            orderId=orderId
         )
         print("\n=== Cancel Order Result ===")
-        print(cancel_result)
+        print(cancelResult)
         
-        close_result = copytrading_api.closePositionByOrder(
-            orderId=order_id,
+        closeResult = copyTradingApi.closePositionByOrder(
+            orderId=orderId,
             size="0.1",
             brokerId=brokerId
         )
         print("\n=== Close Position By Order Result ===")
-        print(close_result)
+        print(closeResult)
 
-        close_result = copytrading_api.closePositionByContract(
+        closeResult = copyTradingApi.closePositionByContract(
             instId="BTC-USDT",
             brokerId=brokerId,
             marginMode="cross",
@@ -155,18 +154,18 @@ def copytrading_example():
             size= "1"
         )
         print("\n=== Close Position By Contract Result ===")
-        print(close_result)
+        print(closeResult)
 
         # 12. Get order history
-        order_history = copytrading_api.getOrdersHistory(
+        orderHistory = copyTradingApi.getOrdersHistory(
             instId="BTC-USDT",
             limit="5"  # Get last 5 orders
         )
         print("\n=== Order History ===")
-        print(order_history)
+        print(orderHistory)
         
     except Exception as e:
         print(f"Error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    copytrading_example()  # Uncomment this line after adding your API credentials
+    copyTradingExample()  # Uncomment this line after adding your API credentials
