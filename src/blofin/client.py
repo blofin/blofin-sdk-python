@@ -2,15 +2,19 @@ import base64
 import hmac
 import json
 import time
+import uuid
 from hashlib import sha256
 from typing import Dict, List, Optional, Union
 from urllib.parse import urlencode
 from blofin.exceptions import BlofinAPIException
+from blofin.logger_config import get_logger
 
 import requests
 import websockets
 import asyncio
 import threading
+
+logger = get_logger("rest")
 
 
 class BaseClient:
@@ -41,13 +45,51 @@ class BaseClient:
         return str(int(time.time() * 1000))
 
     def _get_server_timestamp(self) -> str:
-        response = requests.get(f"{self.base_url}/api/v1/public/time")
-        if response.status_code == 200:
-            return response.json()['data']['ts']
+        """Fetch the exchange server timestamp used for request signing.
+
+        Falls back to the local clock when the endpoint is unreachable or
+        returns an unexpected payload. The signing timestamp is only rejected
+        by the exchange when it drifts beyond its allowed window, so a
+        slightly-off local clock is a better failure mode than raising and
+        aborting the caller's order.
+
+        The request goes through the shared session so that the configured
+        timeout, proxies, and TLS settings apply here as well.
+        """
+        try:
+            response = self.session.get(
+                f"{self.base_url}/api/v1/public/time",
+                timeout=self.timeout,
+                proxies=self.proxies
+            )
+            if response.status_code == 200:
+                return str(response.json()['data']['ts'])
+            logger.warning(
+                "Server time endpoint returned status %s; "
+                "falling back to local clock for request signing",
+                response.status_code
+            )
+        except (requests.exceptions.RequestException, ValueError, KeyError, TypeError) as e:
+            # Network failure, malformed JSON, or an unexpected envelope shape.
+            # Never let auxiliary time sync break the actual signed request.
+            logger.warning(
+                "Failed to read server time (%s); "
+                "falling back to local clock for request signing",
+                e
+            )
         return str(int(time.time() * 1000))
 
     def _get_nonce(self) -> str:
-        return str(int(time.time() * 1000))
+        """Return a unique nonce for a single signed request.
+
+        The nonce must be unique per request, not merely per millisecond.
+        Deriving it from the millisecond clock produced identical nonces for
+        requests issued inside the same millisecond (most visibly during batch
+        order placement), which the exchange rejects as a replayed request.
+        A UUID4 is collision-free in practice and stays within the header size
+        limits.
+        """
+        return uuid.uuid4().hex
 
     def _sign_request(
         self,
@@ -150,15 +192,16 @@ class BaseClient:
                 timeout=self.timeout,
                 proxies=self.proxies
             )
-            response_data = response.json()
-            if response.status_code != 200:
-                raise BlofinAPIException(
-                    message=f"API request failed with status code {response.status_code}",
-                    status_code=response.status_code,
-                    response=response_data
-                )
-            return response_data
-            
+            # Delegate to _handle_response so that HTTP status codes and the
+            # BloFin envelope error code ("0" means success) are both enforced.
+            # Previously only the HTTP status was checked, which silently
+            # returned business-level failures to the caller as if successful.
+            return self._handle_response(response)
+
+        except BlofinAPIException:
+            # Already normalized by _handle_response; propagate unchanged so
+            # callers keep the exchange's error code and payload.
+            raise
         except requests.exceptions.RequestException as e:
             raise BlofinAPIException(
                 message=f"Request failed: {str(e)}",

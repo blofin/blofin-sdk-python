@@ -1,31 +1,20 @@
 """BloFin WebSocket API client implementation."""
 
 import asyncio
-import json
-import logging
-import hmac
-import hashlib
-import time
 import base64
-from typing import AsyncIterator, Dict, Optional, Tuple
+import hashlib
+import hmac
+import json
+import time
+from typing import Any, AsyncIterator, Dict, Optional, Set, Tuple
+
 import websockets
+from websockets.protocol import State
+
 from blofin.exceptions import BlofinAPIException
 from blofin.logger_config import get_logger
 
 logger = get_logger("websocket")
-
-"""BloFin WebSocket API client with simplified reconnection mechanism."""
-
-import asyncio
-import json
-import logging
-import time
-import websockets
-from typing import Dict, Optional, Set, Any, AsyncIterator
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("blofin_ws")
 
 class BlofinWsClient:
     """BloFin WebSocket client with simplified connection management."""
@@ -96,11 +85,13 @@ class BlofinWsClient:
         }
 
     def _isConnected(self) -> bool:
-        """Check if WebSocket is connected."""
-        return (
-            self._ws is not None and 
-            self._ws.state.value == 1  # OPEN state
-        )
+        """Check if WebSocket is connected.
+
+        Compares against the ``State`` enum instead of a bare integer so the
+        check cannot silently invert if the library renumbers its states.
+        """
+        ws = self._ws
+        return ws is not None and getattr(ws, "state", None) == State.OPEN
 
     async def connect(self) -> bool:
         """Establish WebSocket connection with authentication if needed.
@@ -246,6 +237,15 @@ class BlofinWsClient:
                             raise Exception("Re-authentication failed")
                             
                     # Restore subscriptions
+                    # Mark the connection as live *before* restoring
+                    # subscriptions. subscribe() consults _isConnected()
+                    # and triggers its own reconnect when it reports False;
+                    # restoring while the flag was still False re-entered
+                    # _reconnect(), which the `attempting` guard turns into an
+                    # immediate False, silently dropping every subscription.
+                    self._connected = True
+                    self._reconnectState['currentRetry'] = 0
+
                     subscriptions_to_restore = self._subscriptions.copy()
                     for subscription in subscriptions_to_restore:
                         # For private channels, don't include instId if it's "all"
@@ -258,13 +258,9 @@ class BlofinWsClient:
                         else:
                             await self.subscribe(subscription)
                         
-                    # Reset reconnection state
-                    self._reconnectState['currentRetry'] = 0
-                    self._connected = True
-                    
                     # Restart background tasks
                     self._startTasks()
-                    
+
                     logger.info("Reconnection successful")
                     return True
                     
@@ -283,6 +279,9 @@ class BlofinWsClient:
             return False
             
         finally:
+            # Always release the reconnection lock so a later disconnect can
+            # retry again, and reset the attempt counter so the next
+            # disconnection starts from a full retry budget.
             self._reconnectState['attempting'] = False
             self._reconnectState['currentRetry'] = 0
 
@@ -519,22 +518,34 @@ class BlofinWsClient:
                     break
 
     async def close(self):
-        """Close WebSocket connection and cleanup."""
+        """Close WebSocket connection and cleanup.
+
+        Cancels the background tasks and awaits their termination before
+        closing the socket. Without awaiting them, the tasks can still be
+        running (and logging, or touching ``self._ws``) while it is being
+        torn down, which surfaces as "Task was destroyed but it is pending"
+        warnings and can raise on a half-closed connection.
+        """
         try:
             # Cancel background tasks
-            if self._receiverTask:
-                self._receiverTask.cancel()
-                
-            if self._heartbeatTask:
-                self._heartbeatTask.cancel()
-                
+            tasks = [t for t in (self._receiverTask, self._heartbeatTask) if t]
+            for task in tasks:
+                task.cancel()
+
+            # Await cancellation so no task outlives this method
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+
             # Close WebSocket connection
             if self._ws:
                 await self._ws.close()
-                
+
+            self._ws = None
             self._connected = False
+            self._receiverTask = None
+            self._heartbeatTask = None
             logger.info("WebSocket connection closed")
-            
+
         except Exception as e:
             logger.error(f"Error closing connection: {e}")
             raise BlofinAPIException(
